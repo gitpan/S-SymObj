@@ -1,0 +1,13 @@
+--- #YAML:1.0
+name:                S-SymObj
+version:             0.6.0
+abstract:            Easy creation of symbol-tables and objects
+license:             ISC
+author:              
+    - Steffen "Daode" Nurpmeso <sdaoden@users.sf.net>
+generated_by:        ExtUtils::MakeMaker version 6.42
+distribution_type:   module
+requires:     
+meta-spec:
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3
