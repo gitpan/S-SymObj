@@ -1,8 +1,8 @@
 #@ (S-)Sym(bolic)Obj(ect) - easy creation of symbol tables and objects.
 package SymObj;
 require 5.008_001;
-$VERSION = '0.6.0';
-$COPYRIGHT =<<__EOT__;
+our $VERSION = '0.6.1';
+our $COPYRIGHT =<<__EOT__;
 Copyright (c) 2010 - 2012 Steffen "Daode" Nurpmeso <sdaoden\@users.sf.net>.
 All rights reserved under the terms of the ISC license.
 __EOT__
@@ -18,10 +18,10 @@ __EOT__
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#use diagnostics -verbose;
-
-# We fool around with that by definition, so this
-no strict 'refs';
+use diagnostics -verbose;
+use warnings;
+use strict;
+no strict 'refs'; # We fool around with that by definition, so this
 
 sub NONE()        { 0 }
 sub DEBUG()       { 1<<0 }
@@ -34,12 +34,13 @@ sub _HAS_ALL()    { _HAS_ARRAY | _HAS_HASH }
 
 sub _CLEANHIER()  { 1<<5 }
 
-$MsgFH = *STDERR;
-$Debug = 1; # 0,1,2
+sub _UUID         { 'S-SymObj::1C8288D6-9EDA-4ECD-927F-2144B94186AD'; }
+
+our $MsgFH = *STDERR;
+our $Debug = 1; # 0,1,2
 
 sub pack_exists {
-   my ($pkg) = @_;
-   defined %{"${pkg}::"};
+   %{"${_[0]}::"};
 }
 
 sub sym_dump {
@@ -201,7 +202,7 @@ sub sym_create { # {{{
          *{"${pkg}::__$pj"} = sub { $_[0]->{$xj}; };
          *{"${pkg}::$pj"} = sub {
             my $self = $_[0];
-            if (($self = ref $self) ne '' && defined %{"${self}::"}) {
+            if (($self = ref $self) ne '' && %{"${self}::"}) {
                $self = shift;
                if ($tj & TYPE_EXCLUDE) {
                   SymObj::_complain_exclude($pkg, $pj) if $flags & DEBUG;
@@ -223,7 +224,7 @@ sub sym_create { # {{{
          *{"${pkg}::__$pj"} = sub { $_[0]->{$xj}; };
          *{"${pkg}::$pj"} = sub {
             my $self = $_[0];
-            if (($self = ref $self) ne '' && defined %{"${self}::"}) {
+            if (($self = ref $self) ne '' && %{"${self}::"}) {
                $self = shift;
                if ($tj & TYPE_EXCLUDE) {
                   SymObj::_complain_exclude($pkg, $pj) if $flags & DEBUG;
@@ -247,7 +248,7 @@ sub sym_create { # {{{
          *{"${pkg}::__$pj"} = sub { \$_[0]->{$xj}; };
          *{"${pkg}::$pj"} = sub {
             my $self = $_[0];
-            if (($self = ref $self) ne '' && defined %{"${self}::"}) {
+            if (($self = ref $self) ne '' && %{"${self}::"}) {
                $self = shift;
                if ($tj & TYPE_EXCLUDE) {
                   SymObj::_complain_exclude($pkg, $pj) if $flags & DEBUG;
@@ -326,7 +327,7 @@ j_OVW:}
       foreach my $c (@{${"${pkg}::"}{ISA}}) {
          unless (defined ${"${c}::"}{new}) {
             print $MsgFH "${pkg}: $class->new(): no such package: $c!\n"
-               and next unless defined %{"${c}::"};
+               and next unless %{"${c}::"};
             print $MsgFH "${pkg}: $class->new(): $c: misses a new() sub!\n";
             next;
          }
@@ -520,7 +521,7 @@ sub _ctor_cleanhier { # {{{
 
    # Call user CTORs in correct order..
    foreach $pkg (@$isa) {
-      if (defined($sym = ${"${pkg}::"}{_SymObj_USR_CTOR})) {
+      if (defined(my $sym = ${"${pkg}::"}{_SymObj_USR_CTOR})) {
          &$sym($self);
       }
    }
@@ -530,7 +531,7 @@ sub _ctor_cleanhier { # {{{
 sub _resolve_tree { # {{{
    my ($pkg, $_actorargs, $_p, $_f, $_isa) = @_;
    foreach my $c (@{${"${_p}::"}{ISA}}) {
-      unless (defined %{"${c}::"}) {
+      unless (%{"${c}::"}) {
          print $MsgFH "${pkg}: $_p: \@ISA contains non-existent ",
             "class '$c'!\n" if $$_f & DEBUG;
          next;
@@ -570,8 +571,6 @@ sub _complain_rdonly {
    my ($pkg, $pub) = @_;
    print $MsgFH "${pkg}::$pub(): write access to READONLY field!\n";
 }
-
-sub _UUID { 'S-SymObj::1C8288D6-9EDA-4ECD-927F-2144B94186AD'; }
 
 sub _find_usr_ctor { # {{{
    # No constructor was given to sym_create(), or it was no code-ref.
@@ -706,7 +705,7 @@ L<http://sourceforge.net/p/ssymobj/code/>).
 
 =over
 
-=item C<$VERSION> (string, i.e., '0.6.0')
+=item C<$VERSION> (string, i.e., '0.6.1')
 
 A version string.
 
@@ -905,6 +904,16 @@ Shared hash handler, only if needed.
 
 Optional (flag driven) thread safety for static data access.
 Thread safety for resolving the user-constructor (maybe).
+
+Maybe add support for class members, but the problem here is of course
+the default-argument nature of S-SymObj; we could however require
+initialization of the member with a C<package, callback> tuple to (1)
+test references of given objects (via perl(1) UNIVERSAL, then) and
+initialize default objects if none has been given by user.
+
+Finally: realize that perl(1) ships with struct and class and similar
+things which head in the very same direction as S-SymObj.  I want to
+point out that i wrote this package the hard way.  It is me.
 
 =head1 LICENSE
 
