@@ -4,4 +4,5 @@ MANIFEST				This list of files
 MANIFEST.SKIP				Files to exclude from MANIFEST
 README					Introductional reading
 test.pl					Automated test for the module
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
